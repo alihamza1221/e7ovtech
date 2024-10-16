@@ -34,9 +34,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Role } from "@repo/db/models/user";
-
+import WorkspaceTable from "./workspaces_table";
+import { Workspace } from "./workspaces_table";
 // Mock data for the pie chart
 const taskData = [
   { name: "Completed", value: 75 },
@@ -74,6 +75,8 @@ const COLORS = [
 
 export function AdminDashboardComponent() {
   const [userData, setUserData] = useState(inituserData);
+  const [allWorkspaceData, setAllWorkspaceData] = useState<Workspace[]>([]);
+
   const [workspaceData, setWorkspaceData] = useState<any>([]);
   const [newMember, setNewMember] = useState({
     name: "",
@@ -82,6 +85,7 @@ export function AdminDashboardComponent() {
     image: "",
   });
   const [newTeamMemberAdd, setNewTeamMemberAdd] = useState({
+    workspace_name: "",
     email: "",
     role: "",
   });
@@ -146,6 +150,20 @@ export function AdminDashboardComponent() {
     });
   };
 
+  //getworkspaces data to render in workspaces table
+  useEffect(() => {
+    const renderWorkspaces = async () => {
+      try {
+        const AdminWorkspaces = await axios.get("/api/workspace/getworkspace");
+        if (AdminWorkspaces.data.data)
+          setAllWorkspaceData(AdminWorkspaces.data.data);
+        console.log("AdminWorkspaces", AdminWorkspaces.data.data);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    renderWorkspaces();
+  }, []);
   return (
     <div className="p-6 space-y-6 bg-white dark:bg-neutral-950">
       <h1 className="text-3xl font-bold">Admin Dashboard</h1>
@@ -239,7 +257,7 @@ export function AdminDashboardComponent() {
                   onOpenChange={setIsWorkspaceFormOpen}
                 >
                   <DialogTrigger asChild>
-                    <Button>Build</Button>
+                    <Button className="w-18">Build</Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogDescription></DialogDescription>
@@ -279,12 +297,9 @@ export function AdminDashboardComponent() {
               </div>
               <div className="create-add members flex justify-between">
                 <span>Add Existing User to Workspace:</span>
-                <Dialog
-                  open={isWorkspaceFormOpen}
-                  onOpenChange={setIsWorkspaceFormOpen}
-                >
+                <Dialog open={isOpen} onOpenChange={setIsOpen}>
                   <DialogTrigger asChild>
-                    <Button>Add</Button>
+                    <Button>_Add</Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogDescription></DialogDescription>
@@ -295,6 +310,16 @@ export function AdminDashboardComponent() {
                       onSubmit={handleExistingUserAddFormSubmit}
                       className="space-y-4"
                     >
+                      <div>
+                        <Label htmlFor="workspace_name">Workspace Name</Label>
+                        <Input
+                          id="workspace_name"
+                          name="workspace_name"
+                          value={newTeamMemberAdd.workspace_name}
+                          onChange={handleExistingUserAddFormInputChange}
+                          required
+                        />
+                      </div>
                       <div>
                         <Label htmlFor="email">TeamMember Email</Label>
                         <Input
@@ -336,110 +361,10 @@ export function AdminDashboardComponent() {
         </Card>
       </div>
 
-      {/* User Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Team Members</CardTitle>
-          <CardDescription>Manage your team and their tasks</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-end mb-4">
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-              <DialogTrigger asChild>
-                <Button>Add Member</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Team Member</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={newMember.name}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={newMember.email}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="image">Image URL</Label>
-                    <Input
-                      id="image"
-                      name="image"
-                      value={newMember.image}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="role">Role</Label>
-                    <Select
-                      onValueChange={handleRoleChange}
-                      value={newMember.role}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Admin">{Role.Admin}</SelectItem>
-                        <SelectItem value="TeamLead">
-                          {Role.TeamLead}
-                        </SelectItem>
-                        <SelectItem value="TeamMember">
-                          {Role.TeamMember}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button type="submit">Add Member</Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Check Stats</TableHead>
-                <TableHead>Assign Task</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {userData.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.role}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm">
-                      Check Stats
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm">
-                      Assign Task
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <WorkspaceTable
+        workspaceData={allWorkspaceData}
+        onChange={setAllWorkspaceData}
+      />
     </div>
   );
 }

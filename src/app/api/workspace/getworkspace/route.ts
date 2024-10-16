@@ -5,6 +5,8 @@ import dbConnect from "@repo/db/mongooseConnect";
 import { returnResErr, returnResUnAuth } from "@repo/utils/nextResponse";
 import { userModel } from "@repo/db/models/user";
 import { nextAuthOptions } from "../../auth/[...nextauth]/authOptions";
+import mongoose from "mongoose";
+import { taskModel } from "@repo/db/models/task";
 
 export const GET = async (req: NextRequest) => {
   const session = await getServerSession(nextAuthOptions);
@@ -12,11 +14,13 @@ export const GET = async (req: NextRequest) => {
     return returnResUnAuth();
   }
 
+  const objAdminId = new mongoose.Types.ObjectId(session.user?._id || "");
   try {
     await dbConnect();
-    const workspaces = await userModel
-      .find({ email: session.user?.email })
-      .populate({ path: "workspaces", model: workspaceModel })
+    const workspaces = await workspaceModel
+      .find({ admin: objAdminId })
+      .populate({ path: "members.userId", model: userModel })
+      .populate({ path: "tasks", model: taskModel })
       .lean();
     return NextResponse.json({ data: workspaces }, { status: 200 });
   } catch (err) {

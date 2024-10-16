@@ -3,9 +3,9 @@ import { workspaceModel } from "@repo/db/models/workspace";
 import { getServerSession } from "next-auth";
 import dbConnect from "@repo/db/mongooseConnect";
 import { returnResErr, returnResUnAuth } from "@repo/utils/nextResponse";
-import mongoose from "mongoose";
-import { nextAuthOptions } from "../../auth/[...nextauth]/authOptions";
-import { Role, userModel } from "@repo/db/models/user";
+import mongoose, { mongo } from "mongoose";
+import { nextAuthOptions } from "../auth/[...nextauth]/authOptions";
+import { userModel } from "@repo/db/models/user";
 
 export const POST = async (req: NextRequest) => {
   const session = await getServerSession(nextAuthOptions);
@@ -14,7 +14,7 @@ export const POST = async (req: NextRequest) => {
   }
 
   try {
-    const { name, description } = await req.json();
+    const { user, workspaceId } = await req.json();
     await dbConnect();
 
     //check session.user.role !== "Admin
@@ -23,27 +23,26 @@ export const POST = async (req: NextRequest) => {
       return returnResUnAuth("Only admins are allowed to create workspaces");
     }
 
-    const objAdminId = new mongoose.Types.ObjectId(session.user?._id || "");
-    const newWorkspace = new workspaceModel({
-      name,
-      description,
-      admin: objAdminId,
-      teamLeads: [],
-      members: [{ userId: objAdminId, role: Role.Admin }], // Add admin as the first member
+    const newUser = await userModel.create({
+      ...user,
     });
+    await newUser.save();
 
-    await newWorkspace.save();
-
-    //update user workspaces
-    await userModel.findOneAndUpdate(
-      { email: session.user.email },
+    const objectWorkspaceId = new mongoose.Types.ObjectId(workspaceId);
+    const updatedWorkspace = await workspaceModel.findByIdAndUpdate(
+      { _id: objectWorkspaceId },
       {
         $push: {
-          workspaces: { workspace: newWorkspace._id, role: Role.Admin },
+          members: {
+            userId: newUser._id,
+            role: user?.workspaces?.role,
+          },
         },
-      }
+      },
+      { new: true }
     );
-    return NextResponse.json({ data: newWorkspace }, { status: 201 });
+
+    return NextResponse.json({ data: updatedWorkspace }, { status: 201 });
   } catch (err) {
     return returnResErr(err);
   }
