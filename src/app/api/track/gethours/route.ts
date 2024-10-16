@@ -4,19 +4,20 @@ import dbConnect from "@repo/db/mongooseConnect";
 import { returnResErr, returnResUnAuth } from "@repo/utils/nextResponse";
 import mongoose from "mongoose";
 import { timeLogModel } from "@repo/db/models/timelog";
+import { nextAuthOptions } from "../../auth/[...nextauth]/authOptions";
 
 export const GET = async (req: NextRequest) => {
-  const session = await getServerSession();
+  const session = await getServerSession(nextAuthOptions);
   let userId: string | any = req.nextUrl.searchParams.get("userId");
 
-  if (!session || (!userId && !session.user.id)) {
+  if (!session || (!userId && !session.user._id)) {
     return returnResUnAuth();
   }
 
   try {
     await dbConnect();
     if (!userId) {
-      userId = new mongoose.Types.ObjectId(session.user.id);
+      userId = new mongoose.Types.ObjectId(session.user?._id || "");
     }
     const timeLogs = await timeLogModel.find({ user: userId }).lean();
     const totalDuration = timeLogs.reduce((acc, log) => {

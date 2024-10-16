@@ -4,9 +4,10 @@ import dbConnect from "@repo/db/mongooseConnect";
 import { returnResErr, returnResUnAuth } from "@repo/utils/nextResponse";
 import mongoose from "mongoose";
 import { messageModel } from "@repo/db/models/message";
+import { nextAuthOptions } from "../../auth/[...nextauth]/authOptions";
 
 export const POST = async (req: NextRequest) => {
-  const session = await getServerSession();
+  const session = await getServerSession(nextAuthOptions);
   const workspaceId = req.nextUrl.searchParams.get("workspaceId");
 
   if (!session || !workspaceId || !session.user) {
@@ -23,12 +24,11 @@ export const POST = async (req: NextRequest) => {
    timestamp: Date;*/
 
     const objectWorkspaceId = new mongoose.Types.ObjectId(workspaceId);
-    const sender = new mongoose.Types.ObjectId(session.user.id);
+    const sender = new mongoose.Types.ObjectId(session.user._id || "");
 
     const newMessage = new messageModel({
       sender,
       workspace: objectWorkspaceId,
-      user: session.user.id,
       content,
     });
 

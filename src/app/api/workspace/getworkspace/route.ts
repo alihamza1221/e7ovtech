@@ -4,9 +4,10 @@ import { getServerSession } from "next-auth";
 import dbConnect from "@repo/db/mongooseConnect";
 import { returnResErr, returnResUnAuth } from "@repo/utils/nextResponse";
 import { userModel } from "@repo/db/models/user";
+import { nextAuthOptions } from "../../auth/[...nextauth]/authOptions";
 
 export const GET = async (req: NextRequest) => {
-  const session = await getServerSession();
+  const session = await getServerSession(nextAuthOptions);
   if (!session || !session.user) {
     return returnResUnAuth();
   }

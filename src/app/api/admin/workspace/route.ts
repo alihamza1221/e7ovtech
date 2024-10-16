@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { workspaceModel } from "@repo/db/models/workspace";
 import { getServerSession } from "next-auth";
 import dbConnect from "@repo/db/mongooseConnect";
-import { returnResErr } from "@repo/utils/nextResponse";
+import { returnResErr, returnResUnAuth } from "@repo/utils/nextResponse";
+import mongoose from "mongoose";
+import { nextAuthOptions } from "../../auth/[...nextauth]/authOptions";
 
 export const POST = async (req: NextRequest) => {
-  const session = await getServerSession();
+  const session = await getServerSession(nextAuthOptions);
   if (!session || !session.user) {
     return NextResponse.json({ message: "Unauthenticated" }, { status: 403 });
   }
@@ -15,13 +17,18 @@ export const POST = async (req: NextRequest) => {
     await dbConnect();
 
     //check session.user.role !== "Admin
+    console.log("user", session.user);
+    if (session.user.role !== "Admin") {
+      return returnResUnAuth("Only admins are allowed to create workspaces");
+    }
 
+    const objAdminId = new mongoose.Types.ObjectId(session.user?._id || "");
     const newWorkspace = new workspaceModel({
       name,
       description,
-      admin: session.user.id,
+      admin: objAdminId,
       teamLeads: [],
-      members: [session.user.id], // Add admin as the first member
+      members: [objAdminId], // Add admin as the first member
     });
 
     await newWorkspace.save();

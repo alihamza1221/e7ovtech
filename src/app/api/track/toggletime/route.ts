@@ -5,9 +5,10 @@ import { returnResErr, returnResUnAuth } from "@repo/utils/nextResponse";
 import { taskModel, TaskStatus } from "@repo/db/models/task";
 import mongoose from "mongoose";
 import { timeLogModel } from "@repo/db/models/timelog";
+import { nextAuthOptions } from "../../auth/[...nextauth]/authOptions";
 
 export const POST = async (req: NextRequest) => {
-  const session = await getServerSession();
+  const session = await getServerSession(nextAuthOptions);
   const taskId = req.nextUrl.searchParams.get("taskId");
 
   if (!session || !taskId) {
@@ -19,24 +20,22 @@ export const POST = async (req: NextRequest) => {
 
     await dbConnect();
     const objectWorkspaceId = new mongoose.Types.ObjectId(workspaceId);
-    const userId = new mongoose.Types.ObjectId(session.user.id);
+    const objectuserId = new mongoose.Types.ObjectId(session.user._id || "");
     const objectTaskId = new mongoose.Types.ObjectId(taskId);
 
     if (startTime) {
       const timeLog = await new timeLogModel({
         workspace: objectWorkspaceId,
-        user: userId,
+        user: objectuserId,
         task: objectTaskId,
         startTime,
-        endTime,
       }).save();
 
-      if (!timeLog) {
-        //set task to completed
-        await taskModel.findByIdAndUpdate(taskId, {
-          status: TaskStatus.InProgress,
-        });
-      }
+      //set task to completed
+      await taskModel.findByIdAndUpdate(objectTaskId, {
+        status: TaskStatus.InProgress,
+      });
+
       return NextResponse.json({ data: timeLog }, { status: 201 });
     } else if (endTime) {
       //if task is completed
@@ -49,7 +48,7 @@ export const POST = async (req: NextRequest) => {
         return returnResErr("Task not started yet or already completed");
       }
       //set task to completed
-      await taskModel.findByIdAndUpdate(taskId, {
+      await taskModel.findByIdAndUpdate(objectTaskId, {
         status: TaskStatus.Completed,
       });
       return NextResponse.json({ data: timeLog }, { status: 200 });

@@ -3,9 +3,10 @@ import { getServerSession } from "next-auth";
 import dbConnect from "@repo/db/mongooseConnect";
 import { returnResErr, returnResUnAuth } from "@repo/utils/nextResponse";
 import { taskModel } from "@repo/db/models/task";
+import { nextAuthOptions } from "../../auth/[...nextauth]/authOptions";
 
 export const GET = async (req: NextRequest) => {
-  const session = await getServerSession();
+  const session = await getServerSession(nextAuthOptions);
   const workspaceId = req.nextUrl.searchParams.get("workspaceId");
 
   if (!session || !workspaceId || !session.user) {
@@ -17,7 +18,7 @@ export const GET = async (req: NextRequest) => {
     const userTasks = await taskModel
       .find({
         workspace: workspaceId,
-        $or: [{ assignedTo: session.user.id }, { createdBy: session.user.id }],
+        assignedTo: session.user._id,
       })
       .lean();
 

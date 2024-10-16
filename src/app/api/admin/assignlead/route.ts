@@ -4,9 +4,9 @@ import { getServerSession } from "next-auth";
 import { returnResErr, returnResUnAuth } from "@repo/utils/nextResponse";
 import dbConnect from "@repo/db/mongooseConnect";
 import mongoose from "mongoose";
-
+import { nextAuthOptions } from "../../auth/[...nextauth]/authOptions";
 export const PUT = async (req: NextRequest) => {
-  const session = await getServerSession();
+  const session = await getServerSession(nextAuthOptions);
   const strWorkspaceId = req.nextUrl.searchParams.get("workspaceId");
   const { teamLeadId: strTeamLeadId } = await req.json();
 
@@ -20,9 +20,10 @@ export const PUT = async (req: NextRequest) => {
 
     //conver typeof workspaceId to ObjectId
     const workspaceId = new mongoose.Types.ObjectId(strWorkspaceId);
+    const objectuserId = new mongoose.Types.ObjectId(session.user?._id || "");
     const isAdmin = await workspaceModel.findOne({
       _id: workspaceId,
-      admin: session.user.id,
+      admin: objectuserId,
     });
     if (!isAdmin) {
       return returnResUnAuth("Only admins are allowed to assign team leads");

@@ -5,7 +5,7 @@ interface TimeLog extends Document {
   task: Types.ObjectId;
   workspace: Types.ObjectId;
   startTime: Date;
-  endTime: Date;
+  endTime?: Date;
 }
 
 const timeLogSchema: Schema<TimeLog> = new Schema<TimeLog>({

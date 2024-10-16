@@ -34,14 +34,14 @@ export const nextAuthOptions: NextAuthOptions = {
       },
 
       async authorize(credentials: any): Promise<any> {
+        console.log("cred: ", credentials);
         await dbConnect();
-        const { email: CredEmail } = credentials.email;
 
         try {
           const user = await userModel.findOne({
-            $or: [{ email: CredEmail }],
+            email: credentials.email,
           });
-          console.log(user);
+          console.log("user", user);
 
           if (user) {
             const isValid = await bcrypt.compare(
@@ -51,14 +51,16 @@ export const nextAuthOptions: NextAuthOptions = {
             if (!isValid) throw new Error("Password is incorrect");
           } else {
             //create new user
+            const hashedPassword = await bcrypt.hash(credentials.password, 10);
             const newUser = new userModel({
-              email: CredEmail,
-              password: credentials.password,
+              email: credentials.email,
+              password: hashedPassword,
               name: credentials.name,
               role: credentials.role,
               image: credentials.image,
             });
             await newUser.save();
+            console.log("new user", newUser);
             return newUser;
           }
           return user;
@@ -72,12 +74,13 @@ export const nextAuthOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user) {
-        token._id = user._id?.toString();
+        token._id = user._id?.toString() as string;
         token.name = user.name;
         token.role = user.role;
         token.email = user.email;
         token.image = user.image;
       }
+      console.log("user jwt", user, "token:", token, "session:", session);
 
       if (trigger === "update") {
         console.log("triggered", session);
@@ -95,6 +98,7 @@ export const nextAuthOptions: NextAuthOptions = {
       session.user.role = token.role;
       session.user.email = token.email;
       session.user.image = token.image;
+      console.log("session.user", session.user);
       return session;
     },
   },

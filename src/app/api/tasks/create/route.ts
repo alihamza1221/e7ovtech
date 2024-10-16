@@ -4,9 +4,11 @@ import dbConnect from "@repo/db/mongooseConnect";
 import { returnResErr, returnResUnAuth } from "@repo/utils/nextResponse";
 import { Role, userModel } from "@repo/db/models/user";
 import { taskModel } from "@repo/db/models/task";
+import mongoose from "mongoose";
+import { nextAuthOptions } from "../../auth/[...nextauth]/authOptions";
 
 export const POST = async (req: NextRequest) => {
-  const session = await getServerSession();
+  const session = await getServerSession(nextAuthOptions);
   const workspaceId = req.nextUrl.searchParams.get("workspaceId");
   if (!session || !session.user || !workspaceId) {
     return returnResUnAuth();
@@ -31,14 +33,15 @@ export const POST = async (req: NextRequest) => {
         "Only admins and team leads are allowed to create tasks"
       );
     }
+
+    const objectuserId = new mongoose.Types.ObjectId(assignedTo);
     const newTask = new taskModel({
       label,
       description,
       priority,
       deadLine,
-      assignedTo,
+      assignedTo: objectuserId,
       workspace: workspaceId,
-      createdBy: session.user.id,
     });
 
     await newTask.save();

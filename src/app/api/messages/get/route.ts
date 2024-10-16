@@ -5,9 +5,10 @@ import { returnResUnAuth, returnResErr } from "@repo/utils/nextResponse";
 import mongoose from "mongoose";
 import { messageModel } from "@repo/db/models/message";
 import { userModel } from "@repo/db/models/user";
+import { nextAuthOptions } from "../../auth/[...nextauth]/authOptions";
 
 export const GET = async (req: NextRequest) => {
-  const session = await getServerSession();
+  const session = await getServerSession(nextAuthOptions);
   const workspaceId = req.nextUrl.searchParams.get("workspaceId");
 
   if (!session || !workspaceId) {
