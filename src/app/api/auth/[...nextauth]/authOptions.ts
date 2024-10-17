@@ -25,9 +25,6 @@ export const nextAuthOptions: NextAuthOptions = {
           label: "Image",
           type: "text",
           placeholder: "https://image.png",
-          /*  default:
-            "https://static.vecteezy.com/system/resources/thumbnails/005/545/335/small/user-sign-icon-person-symbol-human-avatar-isolated-on-white-backogrund-vector.jpg",
-            */
         },
         password: { label: "Password", type: "password" },
         role: { label: "Role", type: "text" },

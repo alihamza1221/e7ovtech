@@ -93,7 +93,6 @@ export function WorkspaceChatComponent() {
     }
   };
   const isSender = (senderId: string): boolean => {
-    if (status != "authenticated") console.log("Not authenticated");
     return senderId === session?.user._id;
   };
   useEffect(() => {
