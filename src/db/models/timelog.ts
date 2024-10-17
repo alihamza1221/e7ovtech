@@ -17,7 +17,7 @@ const timeLogSchema: Schema<TimeLog> = new Schema<TimeLog>({
 });
 
 export const timeLogModel =
-  (mongoose.models.TimeLog as mongoose.Model<TimeLog>) ||
+  (mongoose.models?.TimeLog as mongoose.Model<TimeLog>) ||
   mongoose.model<TimeLog>("TimeLog", timeLogSchema);
 
 export { timeLogSchema };

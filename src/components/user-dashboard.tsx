@@ -8,14 +8,6 @@ import {
   CardTitle,
 } from "./ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -34,10 +26,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Role } from "@repo/db/models/user";
-import WorkspaceTable from "./workspaces_table";
-import { Workspace } from "./workspaces_table";
+import { Priority, TaskStatus } from "@repo/db/models/task";
+import UserWorkspaceTable from "./user-workspace-table";
+
 // Mock data for the pie chart
 const taskData = [
   { name: "Completed", value: 75 },
@@ -73,9 +67,28 @@ const COLORS = [
   "hsl(var(--muted))",
 ];
 
-export function AdminDashboardComponent() {
+interface TaskData {
+  _id: string;
+  label: string;
+  priority: Priority;
+  status: TaskStatus;
+  deadLine: Date | string;
+  createdAt: Date | string; // Same as above
+  description: string;
+}
+
+export interface UserTasksDataByWorkspace {
+  _id: string;
+  tasks: TaskData[];
+  workspaceId: string;
+  workspaceName: string;
+  workspaceDescription: string;
+}
+export function UserDashboardComponent() {
   const [userData, setUserData] = useState(inituserData);
-  const [allWorkspaceData, setAllWorkspaceData] = useState<Workspace[]>([]);
+  const [allWorkspaceData, setAllWorkspaceData] = useState<
+    UserTasksDataByWorkspace[]
+  >([]);
 
   const [workspaceData, setWorkspaceData] = useState<any>([]);
   const [newMember, setNewMember] = useState({
@@ -96,6 +109,8 @@ export function AdminDashboardComponent() {
   const [isOpen, setIsOpen] = useState(false);
   const [isWorkspaceFormOpen, setIsWorkspaceFormOpen] = useState(false);
 
+  const searParams = useSearchParams();
+  const userId = searParams.get("userId");
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMember({ ...newMember, [e.target.name]: e.target.value });
   };
@@ -154,21 +169,20 @@ export function AdminDashboardComponent() {
   useEffect(() => {
     const renderWorkspaces = async () => {
       try {
-        const AdminWorkspaces = await axios.get(
-          "/api/workspace/getworkspace?isAdminWorspaces=true"
+        const userWorkspaces = await axios.get(
+          `/api/tasks/assignedTasks?userId${userId}`
         );
-        if (AdminWorkspaces.data.data)
-          setAllWorkspaceData(AdminWorkspaces.data.data);
-        console.log("AdminWorkspaces", AdminWorkspaces.data.data);
+        if (userWorkspaces.data.data)
+          setAllWorkspaceData(userWorkspaces.data.data);
       } catch (err) {
         console.log(err);
       }
     };
     renderWorkspaces();
-  }, []);
+  }, [userId]);
   return (
     <div className="p-6 space-y-6 bg-white dark:bg-neutral-950">
-      <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+      <h1 className="text-3xl font-bold">User Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Pie Chart Card */}
@@ -363,7 +377,8 @@ export function AdminDashboardComponent() {
         </Card>
       </div>
 
-      <WorkspaceTable
+      <UserWorkspaceTable
+        userId={userId as string}
         workspaceData={allWorkspaceData}
         onChange={setAllWorkspaceData}
       />

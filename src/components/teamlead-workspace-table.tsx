@@ -51,7 +51,7 @@ interface WorkspaceTableProps {
   workspaceData: Workspace[];
   onChange: React.Dispatch<React.SetStateAction<Workspace[]>>;
 }
-const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
+const TeamLeadWorkspaceTable: React.FC<WorkspaceTableProps> = ({
   workspaceData,
   onChange,
 }) => {
@@ -74,7 +74,6 @@ const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
 
   const handleSubmit = async (e: React.FormEvent, workspace_id: string) => {
     e.preventDefault();
-
     const userDataToAdd = {
       user: {
         password: "Fdsa@",
@@ -199,41 +198,44 @@ const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {workspace.members.map((member, idx) => (
-                  <TableRow key={`${idx}-${member.userId?._id}`}>
-                    <TableCell className="font-medium">
-                      {member.userId.name}
-                    </TableCell>
-                    <TableCell>{member.role}</TableCell>
-                    <TableCell>{member.userId.email}</TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm">
-                        Check Stats
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm">
-                        Assign Task
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-[1px] border-red-400 rounded-3xl"
-                        onClick={() =>
-                          handleUserRemoved(
-                            workspace._id,
-                            member.userId?._id as string
-                          )
-                        }
-                        disabled={isRemveLoading}
-                      >
-                        {"_del "}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {workspace.members.map(
+                  (member, idx) =>
+                    member.userId.role !== Role.Admin && (
+                      <TableRow key={`${idx}-${member.userId?._id}`}>
+                        <TableCell className="font-medium">
+                          {member.userId.name}
+                        </TableCell>
+                        <TableCell>{member.role}</TableCell>
+                        <TableCell>{member.userId.email}</TableCell>
+                        <TableCell>
+                          <Button variant="outline" size="sm">
+                            Check Stats
+                          </Button>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="outline" size="sm">
+                            Assign Task
+                          </Button>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-[1px] border-red-400 rounded-3xl"
+                            onClick={() =>
+                              handleUserRemoved(
+                                workspace._id,
+                                member.userId?._id as string
+                              )
+                            }
+                            disabled={isRemveLoading}
+                          >
+                            {"_del "}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -242,4 +244,4 @@ const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
     </div>
   );
 };
-export default WorkspaceTable;
+export default TeamLeadWorkspaceTable;

@@ -38,6 +38,7 @@ import { useEffect, useState } from "react";
 import { Role } from "@repo/db/models/user";
 import WorkspaceTable from "./workspaces_table";
 import { Workspace } from "./workspaces_table";
+import TeamLeadWorkspaceTable from "./teamlead-workspace-table";
 // Mock data for the pie chart
 const taskData = [
   { name: "Completed", value: 75 },
@@ -73,7 +74,7 @@ const COLORS = [
   "hsl(var(--muted))",
 ];
 
-export function AdminDashboardComponent() {
+export function TeamLeadDashboardComponent() {
   const [userData, setUserData] = useState(inituserData);
   const [allWorkspaceData, setAllWorkspaceData] = useState<Workspace[]>([]);
 
@@ -154,12 +155,10 @@ export function AdminDashboardComponent() {
   useEffect(() => {
     const renderWorkspaces = async () => {
       try {
-        const AdminWorkspaces = await axios.get(
-          "/api/workspace/getworkspace?isAdminWorspaces=true"
-        );
-        if (AdminWorkspaces.data.data)
-          setAllWorkspaceData(AdminWorkspaces.data.data);
-        console.log("AdminWorkspaces", AdminWorkspaces.data.data);
+        const TeamLeadWorkspaces = await axios.get("/api/teamlead/getData");
+        if (TeamLeadWorkspaces.data.data)
+          setAllWorkspaceData(TeamLeadWorkspaces.data.data);
+        console.log("TeamLeadWorkspaces", TeamLeadWorkspaces.data.data);
       } catch (err) {
         console.log(err);
       }
@@ -168,7 +167,7 @@ export function AdminDashboardComponent() {
   }, []);
   return (
     <div className="p-6 space-y-6 bg-white dark:bg-neutral-950">
-      <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+      <h1 className="text-3xl font-bold">Team Lead Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Pie Chart Card */}
@@ -363,7 +362,7 @@ export function AdminDashboardComponent() {
         </Card>
       </div>
 
-      <WorkspaceTable
+      <TeamLeadWorkspaceTable
         workspaceData={allWorkspaceData}
         onChange={setAllWorkspaceData}
       />

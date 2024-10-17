@@ -24,7 +24,7 @@ const workspaceSchema: Schema<Workspace> = new Schema<Workspace>({
 });
 
 export const workspaceModel =
-  (mongoose.models.Workspace as mongoose.Model<Workspace>) ||
+  (mongoose.models?.Workspace as mongoose.Model<Workspace>) ||
   mongoose.model<Workspace>("Workspace", workspaceSchema);
 
 export { workspaceSchema };

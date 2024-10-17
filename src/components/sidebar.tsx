@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
@@ -10,10 +11,16 @@ import { Sheet, SheetTrigger, SheetContent } from "./ui/sheet";
 // Mock data for workspaces and users
 import { Workspace } from "@repo/db/models/workspace";
 import axios from "axios";
+import { Role } from "@repo/db/models/user";
 const users = ["Alice", "Bob", "Charlie", "David"];
 
 export function Sidebar() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const { data: session, status } = useSession();
+  const dashboardUrl =
+    session?.user.role == Role.Admin
+      ? "/home/dashboard"
+      : `/home/userDashboard?userId=${session?.user._id}`;
   useEffect(() => {
     const getWorkspaces = async () => {
       const res = await axios.get("/api/workspace/getworkspace");
@@ -30,14 +37,26 @@ export function Sidebar() {
     <ScrollArea className="flex-1">
       <div className="p-4 space-y-6">
         <section>
-          <h3 className="mb-2 text-lg font-semibold">Admin</h3>
+          <h3 className="mb-2 text-lg font-semibold">Adminstration</h3>
           <ul className="space-y-2">
             <li>
               <Link
-                href="/home/dashboard"
+                href={dashboardUrl}
                 className="text-blue-600 hover:underline"
               >
                 Dashboard
+              </Link>
+            </li>
+            <li
+              className={`${
+                session?.user.role == Role.TeamLead ? "block" : "block"
+              }`}
+            >
+              <Link
+                href={`/home/teamleadDashboard?userId=${session?.user._id}`}
+                className="text-blue-600 hover:underline"
+              >
+                Manage Team
               </Link>
             </li>
           </ul>

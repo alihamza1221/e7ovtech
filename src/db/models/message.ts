@@ -15,7 +15,7 @@ const messageSchema: Schema<Message> = new Schema<Message>({
 });
 
 export const messageModel =
-  (mongoose.models.Message as mongoose.Model<Message>) ||
+  (mongoose.models?.Message as mongoose.Model<Message>) ||
   mongoose.model<Message>("Message", messageSchema);
 
 export { messageSchema };

@@ -9,6 +9,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { ScrollArea } from "./ui/scroll-area";
 import axios from "axios";
 import { useSession } from "next-auth/react";
+import { TaskCreationPopupComponent } from "./task-creation-popup";
+import { Role } from "@repo/db/models/user";
+import { Priority } from "@repo/db/models/task";
 
 export function WorkspaceChatComponent() {
   const searchParams = useSearchParams();
@@ -19,6 +22,8 @@ export function WorkspaceChatComponent() {
   const [cursorPosition, setCursorPosition] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+
+  const [isCreateTaskDialogOpen, setIsCreateTaskDialogOpen] = useState(false);
   type Message = {
     _id: string;
     sender: {
@@ -44,10 +49,37 @@ export function WorkspaceChatComponent() {
     }
   };
 
+  const handleMentionClick = (mention: string) => {
+    const beforeMention = inputValue.slice(0, cursorPosition - 1);
+    const afterMention = inputValue.slice(cursorPosition);
+    setInputValue(`${beforeMention}${mention} ${afterMention}`);
+    setShowPopover(false);
+    inputRef.current?.focus();
+  };
+  const { data: session, status } = useSession();
+
+  //build commands for user
+  function getUserCommandsByRole() {
+    //implement it later
+    const dummyRole = Role.TeamLead;
+    if (dummyRole == Role.TeamLead) {
+      return ["assign task", "create-task", "delete-task"];
+    } else return ["getWorkspace info"];
+  }
+
+  const userCommands = getUserCommandsByRole();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim()) {
-      const content = inputValue.trim();
+    const curValue = inputValue.trim();
+    if (curValue.startsWith("@")) {
+      const request = curValue.slice(1);
+      if (request === "create-task") {
+        setIsCreateTaskDialogOpen(true);
+      }
+    }
+    if (curValue) {
+      const content = curValue;
 
       const res = await axios.post(
         `/api/messages/send?workspaceId=${workspaceId}`,
@@ -60,16 +92,6 @@ export function WorkspaceChatComponent() {
       setInputValue("");
     }
   };
-
-  const handleMentionClick = (mention: string) => {
-    const beforeMention = inputValue.slice(0, cursorPosition - 1);
-    const afterMention = inputValue.slice(cursorPosition);
-    setInputValue(`${beforeMention}${mention} ${afterMention}`);
-    setShowPopover(false);
-    inputRef.current?.focus();
-  };
-  const { data: session, status } = useSession();
-
   const isSender = (senderId: string): boolean => {
     if (status != "authenticated") console.log("Not authenticated");
     return senderId === session?.user._id;
@@ -93,6 +115,7 @@ export function WorkspaceChatComponent() {
   //get all messages in workspace on render
   useEffect(() => {
     // fetch messages from server
+
     const getWorkspaceMessages = async () => {
       const res = await axios.get(
         `/api/messages/get?workspaceId=${workspaceId}`
@@ -110,9 +133,75 @@ export function WorkspaceChatComponent() {
       }
     };
     getWorkspaceMessages();
-  }, []);
+  }, [workspaceId]);
+
+  type TaskSubmissionParams = {
+    label: string;
+    priority: Priority;
+    description: string;
+    deadline: Date;
+    assignedTo: string;
+  };
+  async function getUserIdByEmail(email: string) {
+    const response = await axios.post("/api/getUserByEmail", {
+      email,
+    });
+    if (response.data.data) {
+      return response.data.data?._id;
+    }
+  }
+
+  async function createTask(
+    {
+      label,
+      priority,
+      description,
+      deadline,
+      assignedTo,
+    }: TaskSubmissionParams,
+    workspaceId: string
+  ) {
+    const userId = await getUserIdByEmail(assignedTo);
+    const res = await axios.post(
+      `/api/tasks/create?workspaceId=${workspaceId}`,
+      {
+        label,
+        priority,
+        description,
+        deadline,
+        assignedTo: userId,
+      }
+    );
+    if (res.data.data) {
+      console.log("Task created successfully", res.data.data);
+    }
+  }
+
+  function handleCreateTaskSubmission({
+    label,
+    priority,
+    description,
+    deadline,
+    assignedTo,
+  }: TaskSubmissionParams): void {
+    /*{ label, priority, description, deadLine:Date, assignedTo: objectId } 
+    params: workspaceId */
+    try {
+      createTask(
+        { label, priority, description, deadline, assignedTo },
+        workspaceId
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  }
   return (
     <div className="flex flex-col h-full max-w-2xl mx-auto">
+      <TaskCreationPopupComponent
+        isOpen={isCreateTaskDialogOpen}
+        onOpenChange={setIsCreateTaskDialogOpen}
+        onSubmit={handleCreateTaskSubmission}
+      />
       <ScrollArea className="flex-grow p-4 space-y-4 mb-[50px]">
         {messages.map((message) => (
           <div
@@ -162,18 +251,16 @@ export function WorkspaceChatComponent() {
             </PopoverTrigger>
             <PopoverContent ref={popoverRef} className="w-56 p-0">
               <div className="grid gap-1">
-                {["Assign new task", "Add member", "Remove member"].map(
-                  (option) => (
-                    <Button
-                      key={option}
-                      variant="ghost"
-                      className="justify-start"
-                      onClick={() => handleMentionClick(option)}
-                    >
-                      {option}
-                    </Button>
-                  )
-                )}
+                {userCommands.map((option) => (
+                  <Button
+                    key={option}
+                    variant="ghost"
+                    className="justify-start"
+                    onClick={() => handleMentionClick(option)}
+                  >
+                    {option}
+                  </Button>
+                ))}
               </div>
             </PopoverContent>
           </Popover>

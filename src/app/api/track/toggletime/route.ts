@@ -1,3 +1,4 @@
+// /api/track/toggletime/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import dbConnect from "@repo/db/mongooseConnect";
@@ -16,11 +17,12 @@ export const POST = async (req: NextRequest) => {
   }
 
   try {
-    const { startTime, endTime, workspaceId } = await req.json();
+    const { startTime, endTime, workspaceId, userId } = await req.json();
 
     await dbConnect();
     const objectWorkspaceId = new mongoose.Types.ObjectId(workspaceId);
-    const objectuserId = new mongoose.Types.ObjectId(session.user._id || "");
+
+    const objectuserId = new mongoose.Types.ObjectId(userId);
     const objectTaskId = new mongoose.Types.ObjectId(taskId);
 
     if (startTime) {
@@ -40,7 +42,15 @@ export const POST = async (req: NextRequest) => {
     } else if (endTime) {
       //if task is completed
       const timeLog = await timeLogModel.findOneAndUpdate(
-        { task: objectTaskId, endTime: null },
+        {
+          task: objectTaskId,
+          $or: [
+            { endTime: undefined },
+            {
+              endTime: null,
+            },
+          ],
+        },
         { endTime },
         { new: true }
       );

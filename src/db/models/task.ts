@@ -49,7 +49,7 @@ const taskSchema: Schema<Task> = new Schema<Task>({
 });
 
 export const taskModel =
-  (mongoose.models.Task as mongoose.Model<Task>) ||
+  (mongoose.models?.Task as mongoose.Model<Task>) ||
   mongoose.model<Task>("Task", taskSchema);
 
 export { taskSchema, Priority, TaskStatus };
