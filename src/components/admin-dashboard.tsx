@@ -20,13 +20,7 @@ import {
 } from "./ui/dialog";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
+
 import { useEffect, useState } from "react";
 import { Role } from "@repo/db/models/user";
 import WorkspaceTable from "./workspaces_table";
@@ -36,66 +30,22 @@ import { Task } from "@repo/db/models/task";
 import { TimeLog } from "@repo/db/models/timelog";
 import FeatureData from "./feature-data";
 
-// Mock data for the user table
-const inituserData = [
-  { id: 1, name: "John Doe", role: "Admin", email: "john@example.com" },
-  { id: 2, name: "Jane Smith", role: "Manager", email: "jane@example.com" },
-  { id: 3, name: "Bob Johnson", role: "Developer", email: "bob@example.com" },
-  { id: 4, name: "Alice Brown", role: "Designer", email: "alice@example.com" },
-  {
-    id: 5,
-    name: "Charlie Wilson",
-    role: "Developer",
-    email: "charlie@example.com",
-  },
-];
-
 export function AdminDashboardComponent() {
-  const [userData, setUserData] = useState(inituserData);
   const [allWorkspaceData, setAllWorkspaceData] = useState<Workspace[]>([]);
 
-  const [workspaceData, setWorkspaceData] = useState<any>([]);
-  const [newMember, setNewMember] = useState({
-    name: "",
-    email: "",
-    role: "",
-    image: "",
-  });
-  const [newTeamMemberAdd, setNewTeamMemberAdd] = useState({
-    workspace_name: "",
-    email: "",
-    role: "",
-  });
   const [newWorkspace, setNewWorkspace] = useState({
     name: "",
     description: "",
   });
-  const [isOpen, setIsOpen] = useState(false);
+
   const [isWorkspaceFormOpen, setIsWorkspaceFormOpen] = useState(false);
   const [tasksData, setTasksData] = useState<Task[]>([]);
   const [timeLogs, setTimeLogs] = useState<TimeLog[]>([]);
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewMember({ ...newMember, [e.target.name]: e.target.value });
-  };
+
   const handleWorkspaceFormInputChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     setNewWorkspace({ ...newWorkspace, [e.target.name]: e.target.value });
-  };
-
-  const handleRoleChange = (value: string) => {
-    setNewMember({ ...newMember, role: value });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newUser = {
-      id: userData.length + 1,
-      ...newMember,
-    };
-    setUserData([...userData, newUser]);
-    setNewMember({ name: "", email: "", role: "", image: "" });
-    setIsOpen(false);
   };
 
   const handleWorkspaceFormSubmit = async (e: React.FormEvent) => {
@@ -106,7 +56,7 @@ export function AdminDashboardComponent() {
       if (res.data?.data) {
         console.log("res.data.data", res.data.data);
 
-        setWorkspaceData([...workspaceData, res.data.data]);
+        setAllWorkspaceData([...allWorkspaceData, res.data.data]);
       }
     } catch (err) {
       console.log("[post] api/workspaces", err);
@@ -114,18 +64,6 @@ export function AdminDashboardComponent() {
 
     setNewWorkspace({ name: "", description: "" });
     setIsWorkspaceFormOpen(false);
-  };
-
-  const handleExistingUserAddFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-  };
-  const handleExistingUserAddFormInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setNewTeamMemberAdd({
-      ...newTeamMemberAdd,
-      [e.target.name]: e.target.value,
-    });
   };
 
   //getworkspaces data to render in workspaces table
@@ -151,6 +89,9 @@ export function AdminDashboardComponent() {
       });
   }
   useEffect(() => {
+    console.log("alltaskdate effe:", allWorkspaceData);
+  }, [allWorkspaceData]);
+  useEffect(() => {
     const renderWorkspaces = async () => {
       try {
         const AdminWorkspaces = await axios.get(
@@ -173,8 +114,8 @@ export function AdminDashboardComponent() {
     renderWorkspaces();
   }, []);
   return (
-    <div className="p-6 space-y-6 bg-white dark:bg-neutral-950">
-      <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+    <div className="space-y-2 px-3 bg-white ">
+      <h1 className="text-2xl font-bold">Admin Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Pie Chart Card */}

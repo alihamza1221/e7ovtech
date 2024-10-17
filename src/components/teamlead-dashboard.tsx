@@ -194,51 +194,6 @@ export function TeamLeadDashboardComponent() {
               workspacesData={allWorkspaceData}
             />
             <ul className="admin-roles space-y-3 border-t-[1px] border-gray-300 py-5">
-              <div className="create-workspace flex justify-between">
-                <span>Create Workspace:</span>
-                <Dialog
-                  open={isWorkspaceFormOpen}
-                  onOpenChange={setIsWorkspaceFormOpen}
-                >
-                  <DialogTrigger asChild>
-                    <Button className="w-18">Build</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogDescription></DialogDescription>
-                    <DialogHeader>
-                      <DialogTitle>Create Your workspace</DialogTitle>
-                    </DialogHeader>
-                    <form
-                      onSubmit={handleWorkspaceFormSubmit}
-                      className="space-y-4"
-                    >
-                      <div>
-                        <Label htmlFor="name">Name</Label>
-                        <Input
-                          id="name"
-                          name="name"
-                          value={newWorkspace.name}
-                          onChange={handleWorkspaceFormInputChange}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="text">Description</Label>
-                        <Input
-                          id="description"
-                          name="description"
-                          type="text"
-                          value={newWorkspace.description}
-                          onChange={handleWorkspaceFormInputChange}
-                          required
-                        />
-                      </div>
-
-                      <Button type="submit">Proceed</Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
               {/*  */}
             </ul>
           </CardContent>

@@ -7,7 +7,7 @@ export default async function Layout({
   return (
     <div className="flex ">
       <Sidebar />
-      <div className="mx-auto my-auto pt-12 w-full h-[calc(100vh-120px)]">
+      <div className="mx-auto my-auto  w-full h-[calc(100vh-120px)]">
         {children}
       </div>
     </div>

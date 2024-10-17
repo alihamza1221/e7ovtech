@@ -23,7 +23,7 @@ export const POST = async (req: NextRequest) => {
       return returnResUnAuth("Only admins are allowed to create workspaces");
     }
 
-    const objAdminId = new mongoose.Types.ObjectId(session.user?._id || "");
+    const objAdminId = new mongoose.Types.ObjectId(session.user?._id as string);
     const newWorkspace = new workspaceModel({
       name,
       description,
@@ -43,7 +43,14 @@ export const POST = async (req: NextRequest) => {
         },
       }
     );
-    return NextResponse.json({ data: newWorkspace }, { status: 201 });
+    const populatedWorkspace = await workspaceModel
+      .findById(newWorkspace._id)
+      .populate({
+        path: "members.userId",
+        model: userModel,
+        select: "name email",
+      });
+    return NextResponse.json({ data: populatedWorkspace }, { status: 201 });
   } catch (err) {
     return returnResErr(err);
   }

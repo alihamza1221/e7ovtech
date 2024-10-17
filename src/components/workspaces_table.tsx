@@ -42,6 +42,7 @@ import {
   TaskCreationPopupComponent,
   TaskSubmissionParams,
 } from "./task-creation-popup";
+import { WorkspaceStatsAccordionComponent } from "./workspace-stats-accordion";
 
 export interface Workspace {
   _id: string;
@@ -320,6 +321,12 @@ const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
                 ))}
               </TableBody>
             </Table>
+            <WorkspaceStatsAccordionComponent
+              workspaceId={workspace._id}
+              workspaceName={workspace.name}
+              workspaceDesc={workspace.description}
+              workspaceTotMembers={workspace.members.length}
+            />
           </CardContent>
         </Card>
       ))}

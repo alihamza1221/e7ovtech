@@ -11,10 +11,14 @@ export async function middleware(req: NextRequest) {
     (url.pathname.startsWith("/api/auth/signin") ||
       url.pathname.startsWith("/api/auth"))
   ) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   } else if (
     !token &&
-    (url.pathname.startsWith("/dashboard") || url.pathname == "/")
+    (url.pathname.startsWith("/home") ||
+      url.pathname.startsWith("/home/workspace") ||
+      url.pathname.startsWith("/home/userDashboard") ||
+      url.pathname.startsWith("/home/userdashboard") ||
+      url.pathname.startsWith("/home/teamleadDashboard"))
   ) {
     return NextResponse.redirect(new URL("/api/auth/signin", req.url));
   }
@@ -23,5 +27,14 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/api/auth/signin", "/dashboard"],
+  matcher: [
+    "/",
+    "/api/auth/signin",
+    "/home/dashboard",
+    "/home",
+    "/home/userDashboard",
+    "/home/userdashboard",
+    "/home/teamleadDashboard",
+    "/home/workspace",
+  ],
 };
