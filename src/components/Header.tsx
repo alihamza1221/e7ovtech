@@ -1,12 +1,24 @@
 import { Button } from "./ui/button";
-
-export default function Header() {
+import { requestAccount } from "@repo/utils/contractServices";
+export default function Header({
+  setAccount,
+}: {
+  setAccount: React.Dispatch<React.SetStateAction<any>>;
+}) {
+  const onWalletClick = () => {
+    const fetchCurAccount = async () => {
+      const account = await requestAccount();
+      setAccount(account);
+    };
+    fetchCurAccount();
+  };
   return (
     <>
       <header className="dark:bg-secondaryBlack inset-0 flex min-h-[100vh] w-full flex-col items-center justify-center bg-white bg-[linear-gradient(to_right,#80808033_1px,transparent_1px),linear-gradient(to_bottom,#80808033_1px,transparent_1px)] bg-[size:70px_70px]">
         <Button
           size="lg"
           className="h-12 fixed top-3 right-3 text-base font-heading md:text-lg rounded-3xl "
+          onClick={() => onWalletClick()}
         >
           Connect Wallet
         </Button>
