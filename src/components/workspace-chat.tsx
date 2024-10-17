@@ -47,7 +47,7 @@ export function WorkspaceChatComponent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
-      let content = inputValue.trim();
+      const content = inputValue.trim();
 
       const res = await axios.post(
         `/api/messages/send?workspaceId=${workspaceId}`,
