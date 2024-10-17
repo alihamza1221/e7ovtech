@@ -5,7 +5,7 @@ export default async function Layout({
   children: React.ReactNode;
 }>) {
   return (
-    <div>
+    <div className="flex ">
       <Sidebar />
       {children}
     </div>

@@ -10,18 +10,32 @@ import { taskModel } from "@repo/db/models/task";
 
 export const GET = async (req: NextRequest) => {
   const session = await getServerSession(nextAuthOptions);
+  // isAdminWorspaces from searchparams
+  const isAdminWorspaces = req.nextUrl.searchParams.get("isAdminWorspaces");
+
   if (!session || !session.user) {
     return returnResUnAuth();
   }
 
-  const objAdminId = new mongoose.Types.ObjectId(session.user?._id || "");
+  const objUserId = new mongoose.Types.ObjectId(session.user?._id || "");
   try {
+    let workspaces;
     await dbConnect();
-    const workspaces = await workspaceModel
-      .find({ admin: objAdminId })
-      .populate({ path: "members.userId", model: userModel })
-      .populate({ path: "tasks", model: taskModel })
-      .lean();
+    if (isAdminWorspaces) {
+      workspaces = await workspaceModel
+        .find({ admin: objUserId })
+        .populate({ path: "members.userId", model: userModel })
+        .populate({ path: "tasks", model: taskModel })
+        .lean();
+    } else {
+      workspaces = await workspaceModel
+        .find({
+          members: {
+            $elemMatch: { userId: objUserId },
+          },
+        })
+        .lean();
+    }
     return NextResponse.json({ data: workspaces }, { status: 200 });
   } catch (err) {
     return returnResErr(err);

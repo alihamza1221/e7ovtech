@@ -21,7 +21,11 @@ export const GET = async (req: NextRequest) => {
     const messages = await messageModel
       .find({ workspace: objectWorkspaceId })
       .sort({ createdAt: -1 })
-      .populate({ path: "sender", model: userModel, select: "name email" })
+      .populate({
+        path: "sender",
+        model: userModel,
+        select: "name email image",
+      })
       .lean();
 
     return NextResponse.json({ data: messages }, { status: 200 });

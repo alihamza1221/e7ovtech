@@ -8,10 +8,22 @@ import { Menu } from "lucide-react";
 import { Sheet, SheetTrigger, SheetContent } from "./ui/sheet";
 
 // Mock data for workspaces and users
-const workspaces = ["Project Alpha", "Team Beta", "Marketing"];
+import { Workspace } from "@repo/db/models/workspace";
+import axios from "axios";
 const users = ["Alice", "Bob", "Charlie", "David"];
 
 export function Sidebar() {
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  useEffect(() => {
+    const getWorkspaces = async () => {
+      const res = await axios.get("/api/workspace/getworkspace");
+      if (res.data.data) {
+        setWorkspaces(res.data.data);
+      }
+    };
+
+    getWorkspaces();
+  }, []);
   const [open, setOpen] = useState(false);
 
   const SidebarContent = () => (
@@ -21,7 +33,10 @@ export function Sidebar() {
           <h3 className="mb-2 text-lg font-semibold">Admin</h3>
           <ul className="space-y-2">
             <li>
-              <Link href="/dashboard" className="text-blue-600 hover:underline">
+              <Link
+                href="/home/dashboard"
+                className="text-blue-600 hover:underline"
+              >
                 Dashboard
               </Link>
             </li>
@@ -31,15 +46,13 @@ export function Sidebar() {
           <h3 className="mb-2 text-lg font-semibold">Workspaces</h3>
           <ul className="space-y-2">
             {workspaces.map((workspace, index) => (
-              <li key={index}>
-                <Link
-                  href={`/workspace/${workspace
-                    .toLowerCase()
-                    .replace(/\s+/g, "'-'")}`}
+              <li key={`${workspace._id}-${index}`}>
+                <a
+                  href={`/home/workspace?workspaceId=${workspace._id}`}
                   className="text-blue-600 hover:underline"
                 >
-                  {workspace}
-                </Link>
+                  {workspace.name}
+                </a>
               </li>
             ))}
           </ul>

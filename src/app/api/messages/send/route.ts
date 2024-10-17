@@ -5,6 +5,7 @@ import { returnResErr, returnResUnAuth } from "@repo/utils/nextResponse";
 import mongoose from "mongoose";
 import { messageModel } from "@repo/db/models/message";
 import { nextAuthOptions } from "../../auth/[...nextauth]/authOptions";
+import { userModel } from "@repo/db/models/user";
 
 export const POST = async (req: NextRequest) => {
   const session = await getServerSession(nextAuthOptions);
@@ -31,9 +32,15 @@ export const POST = async (req: NextRequest) => {
       workspace: objectWorkspaceId,
       content,
     });
-
     await newMessage.save();
-    return NextResponse.json({ data: newMessage }, { status: 201 });
+    // Populate the sender field
+    const populatedMessage = await newMessage.populate({
+      path: "sender",
+      model: userModel,
+      select: "name email image",
+    });
+
+    return NextResponse.json({ data: populatedMessage }, { status: 201 });
   } catch (err) {
     return returnResErr(err);
   }

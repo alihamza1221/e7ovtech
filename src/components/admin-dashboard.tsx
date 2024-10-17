@@ -154,7 +154,9 @@ export function AdminDashboardComponent() {
   useEffect(() => {
     const renderWorkspaces = async () => {
       try {
-        const AdminWorkspaces = await axios.get("/api/workspace/getworkspace");
+        const AdminWorkspaces = await axios.get(
+          "/api/workspace/getworkspace?isAdminWorspaces=true"
+        );
         if (AdminWorkspaces.data.data)
           setAllWorkspaceData(AdminWorkspaces.data.data);
         console.log("AdminWorkspaces", AdminWorkspaces.data.data);
