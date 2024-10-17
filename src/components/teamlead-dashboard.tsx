@@ -8,14 +8,7 @@ import {
   CardTitle,
 } from "./ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
+
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -36,15 +29,11 @@ import {
 } from "./ui/select";
 import { useEffect, useState } from "react";
 import { Role } from "@repo/db/models/user";
-import WorkspaceTable from "./workspaces_table";
+
 import { Workspace } from "./workspaces_table";
 import TeamLeadWorkspaceTable from "./teamlead-workspace-table";
-// Mock data for the pie chart
-const taskData = [
-  { name: "Completed", value: 75 },
-  { name: "In-Progress", value: 25 },
-  { name: "Pending", value: 10 },
-];
+import PieCharCard from "./pie-chart-card";
+import FeatureData, { getTasksStatsData } from "./feature-data";
 
 // Mock data for the feature points
 const featureData = {
@@ -96,7 +85,7 @@ export function TeamLeadDashboardComponent() {
   });
   const [isOpen, setIsOpen] = useState(false);
   const [isWorkspaceFormOpen, setIsWorkspaceFormOpen] = useState(false);
-
+  const [tasksData, setTasksData] = useState<any>([]);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMember({ ...newMember, [e.target.name]: e.target.value });
   };
@@ -152,12 +141,32 @@ export function TeamLeadDashboardComponent() {
   };
 
   //getworkspaces data to render in workspaces table
+  function getTasksData(workspaceIds: string[]) {
+    console.log("teamlead space ids:", workspaceIds);
+    axios
+      .post("/api/tasks/getTasks", { workspaceIds })
+      .then((res) => {
+        setTasksData(res.data.data);
+      })
+      .catch((err) => {
+        console.log("err", err);
+      });
+  }
+
   useEffect(() => {
     const renderWorkspaces = async () => {
       try {
         const TeamLeadWorkspaces = await axios.get("/api/teamlead/getData");
-        if (TeamLeadWorkspaces.data.data)
+        if (TeamLeadWorkspaces.data.data) {
           setAllWorkspaceData(TeamLeadWorkspaces.data.data);
+
+          getTasksData(
+            TeamLeadWorkspaces.data.data.map(
+              (workspace: Workspace) => workspace._id
+            )
+          );
+        }
+
         console.log("TeamLeadWorkspaces", TeamLeadWorkspaces.data.data);
       } catch (err) {
         console.log(err);
@@ -171,53 +180,7 @@ export function TeamLeadDashboardComponent() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Pie Chart Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tracked Tasks</CardTitle>
-            <CardDescription>
-              Status : Pending | In-Progress | Completed
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={taskData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={80}
-                    outerRadius={100}
-                    fill="#8884d8"
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {taskData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                        color={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-4 flex justify-center space-x-4">
-              {taskData.map((entry, index) => (
-                <div key={`legend-${index}`} className="flex items-center">
-                  <div
-                    className="w-3 h-3 mr-2"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  ></div>
-                  <span>
-                    {entry.name}: {entry.value}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <PieCharCard taskData={tasksData} />
 
         {/* Feature Points Card */}
         <Card>
@@ -226,30 +189,10 @@ export function TeamLeadDashboardComponent() {
             <CardDescription>Key metrics at a glance</CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-4 pb-2">
-              <li className="flex justify-between items-center">
-                <span>Tasks Created:</span>
-                <span className="font-semibold">
-                  {featureData.tasksCreated}
-                </span>
-              </li>
-              <li className="flex justify-between items-center">
-                <span>Tasks Completed:</span>
-                <span className="font-semibold">
-                  {featureData.tasksCompleted}
-                </span>
-              </li>
-              <li className="flex justify-between items-center">
-                <span>Active Projects:</span>
-                <span className="font-semibold">
-                  {featureData.activeProjects}
-                </span>
-              </li>
-              <li className="flex justify-between items-center ">
-                <span>Team Members:</span>
-                <span className="font-semibold">{featureData.teamMembers}</span>
-              </li>
-            </ul>
+            <FeatureData
+              tasksData={tasksData}
+              workspacesData={allWorkspaceData}
+            />
             <ul className="admin-roles space-y-3 border-t-[1px] border-gray-300 py-5">
               <div className="create-workspace flex justify-between">
                 <span>Create Workspace:</span>
@@ -296,67 +239,7 @@ export function TeamLeadDashboardComponent() {
                   </DialogContent>
                 </Dialog>
               </div>
-              <div className="create-add members flex justify-between">
-                <span>Add Existing User to Workspace:</span>
-                <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                  <DialogTrigger asChild>
-                    <Button>_Add</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogDescription></DialogDescription>
-                    <DialogHeader>
-                      <DialogTitle>Add Existing User to Workspace</DialogTitle>
-                    </DialogHeader>
-                    <form
-                      onSubmit={handleExistingUserAddFormSubmit}
-                      className="space-y-4"
-                    >
-                      <div>
-                        <Label htmlFor="workspace_name">Workspace Name</Label>
-                        <Input
-                          id="workspace_name"
-                          name="workspace_name"
-                          value={newTeamMemberAdd.workspace_name}
-                          onChange={handleExistingUserAddFormInputChange}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email">TeamMember Email</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          value={newTeamMemberAdd.email}
-                          onChange={handleExistingUserAddFormInputChange}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="role">Role</Label>
-                        <Select
-                          onValueChange={handleRoleChange}
-                          value={newMember.role}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Admin">{Role.Admin}</SelectItem>
-                            <SelectItem value="TeamLead">
-                              {Role.TeamLead}
-                            </SelectItem>
-                            <SelectItem value="TeamMember">
-                              {Role.TeamMember}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <Button type="submit">Proceed</Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
+              {/*  */}
             </ul>
           </CardContent>
         </Card>

@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "./ui/card";
 import axios from "axios";
-
+import { ArrowRight } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Table,
@@ -38,6 +38,10 @@ import {
 } from "./ui/select";
 import React, { useEffect, useState } from "react";
 import { Role } from "@repo/db/models/user";
+import {
+  TaskCreationPopupComponent,
+  TaskSubmissionParams,
+} from "./task-creation-popup";
 
 export interface Workspace {
   _id: string;
@@ -63,7 +67,9 @@ const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
     role: "",
     image: "",
   });
-
+  const [workspaceId, setWorkspaceId] = useState("");
+  const [isCreateTaskDialogOpen, setIsCreateTaskDialogOpen] = useState(false);
+  const [userToAssign, setUserToAssign] = useState("");
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMember({ ...newMember, [e.target.name]: e.target.value });
   };
@@ -109,8 +115,69 @@ const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
     setIsRemoveLoading(false);
   }
 
+  async function getUserIdByEmail(email: string) {
+    const response = await axios.post("/api/getUserByEmail", {
+      email,
+    });
+    if (response.data.data) {
+      return response.data.data?._id;
+    }
+  }
+
+  async function createTask(
+    {
+      label,
+      priority,
+      description,
+      deadline,
+      assignedTo,
+    }: TaskSubmissionParams,
+    workspaceId: string
+  ) {
+    const userId = await getUserIdByEmail(assignedTo);
+    console.log("getusrbyid:", userId, "givenid:", assignedTo);
+    const res = await axios.post(
+      `/api/tasks/create?workspaceId=${workspaceId}`,
+      {
+        label,
+        priority,
+        description,
+        deadline,
+        assignedTo: userId,
+      }
+    );
+    if (res.data.data) {
+      console.log("Task created successfully", res.data.data);
+    }
+  }
+
+  function handleCreateTaskSubmission({
+    label,
+    priority,
+    description,
+    deadline,
+    assignedTo,
+  }: TaskSubmissionParams) {
+    /*{ label, priority, description, deadLine:Date, assignedTo: objectId } 
+    params: workspaceId */
+    try {
+      createTask(
+        { label, priority, description, deadline, assignedTo: userToAssign },
+        workspaceId
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   return (
     <div className="space-y-6 border-t-2 border-gray-400 rounded-xl">
+      <TaskCreationPopupComponent
+        isOpen={isCreateTaskDialogOpen}
+        onOpenChange={setIsCreateTaskDialogOpen}
+        onSubmit={handleCreateTaskSubmission}
+        userToAssign={userToAssign}
+      />
       {workspaceData.map((workspace) => (
         <Card key={workspace?._id}>
           <CardHeader>
@@ -200,20 +267,37 @@ const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
               </TableHeader>
               <TableBody>
                 {workspace.members.map((member, idx) => (
-                  <TableRow key={`${idx}-${member.userId?._id}`}>
+                  <TableRow key={member.userId._id as string}>
                     <TableCell className="font-medium">
                       {member.userId.name}
                     </TableCell>
                     <TableCell>{member.role}</TableCell>
                     <TableCell>{member.userId.email}</TableCell>
                     <TableCell>
-                      <Button variant="outline" size="sm">
-                        Check Stats
-                      </Button>
+                      <a
+                        href={`/home/userDashboard?userId=${member.userId._id}`}
+                      >
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-2xl border border-yellow-200"
+                        >
+                          Check Stats <ArrowRight color="gray" />
+                        </Button>
+                      </a>
                     </TableCell>
                     <TableCell>
-                      <Button variant="outline" size="sm">
-                        Assign Task
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-2xl border border-blue-300"
+                        onClick={() => {
+                          setIsCreateTaskDialogOpen(true);
+                          setWorkspaceId(workspace._id);
+                          setUserToAssign(member.userId.email);
+                        }}
+                      >
+                        Assign Task +
                       </Button>
                     </TableCell>
                     <TableCell>

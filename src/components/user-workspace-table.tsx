@@ -42,6 +42,7 @@ import { Role } from "@repo/db/models/user";
 
 import { UserTasksDataByWorkspace } from "./user-dashboard";
 import { format } from "date-fns";
+import TimerButton from "./timer-btn";
 
 interface UserWorkspaceTableProps {
   userId: string;
@@ -205,25 +206,12 @@ const UserWorkspaceTable: React.FC<UserWorkspaceTableProps> = ({
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={
-                            task.status == TaskStatus.Completed ||
-                            task.status == TaskStatus.InProgress
-                          }
-                          onClick={() =>
-                            handleToggleTimer({
-                              startTime: new Date(),
-                              taskId: task._id,
-                              workspaceId: workspace._id,
-                            })
-                          }
-                          className="border-[1px] border-green-400 rounded-3xl flex justify-start items-center"
-                        >
-                          <span>Start </span>
-                          <Timer />
-                        </Button>
+                        <TimerButton
+                          task_id={task._id}
+                          workspace_id={workspace._id}
+                          task_status={task.status}
+                          handleToggleTimer={handleToggleTimer}
+                        />
                       </TableCell>
                       <TableCell>
                         <Button

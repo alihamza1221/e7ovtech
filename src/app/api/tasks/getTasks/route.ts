@@ -1,4 +1,4 @@
-// api/tasks/create/route.ts
+// api/tasks/getTasks/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import dbConnect from "@repo/db/mongooseConnect";
@@ -11,19 +11,20 @@ import { workspaceModel } from "@repo/db/models/workspace";
 
 export const POST = async (req: NextRequest) => {
   const session = await getServerSession(nextAuthOptions);
-  const workspaceId = req.nextUrl.searchParams.get("workspaceId");
-  if (!session || !session.user || !workspaceId) {
+
+  if (!session || !session.user) {
     return returnResUnAuth();
   }
 
+  const { workspaceIds } = await req.json();
+  //convert to object _ids
+  if (workspaceIds.length === 0) {
+    return NextResponse.json({ data: [] }, { status: 200 });
+  }
+  const workspaceIdsObj = workspaceIds.map(
+    (id: string) => new mongoose.Types.ObjectId(id)
+  );
   try {
-    const {
-      label,
-      priority,
-      description,
-      deadline: deadLine,
-      assignedTo,
-    } = await req.json();
     await dbConnect();
     //check session.user.role !== "TeamLead" || "Admin"
     const objRequesterId = new mongoose.Types.ObjectId(session.user?._id ?? "");
@@ -44,27 +45,15 @@ export const POST = async (req: NextRequest) => {
 
     if (!isAdminOrLead) {
       return returnResUnAuth(
-        "Only admins and team leads are allowed to create tasks"
+        "Only admins and team leads are allowed to get Tasks Data"
       );
     }
 
-    //convert deadline string to date
-    let deadLineDate = deadLine;
-    if (typeof deadLine === "string") deadLineDate = new Date(deadLine);
-
-    console.log("deadLineDate", deadLineDate);
-    const objectuserId = new mongoose.Types.ObjectId(assignedTo);
-    const newTask = new taskModel({
-      label,
-      description,
-      priority,
-      deadLine: deadLineDate,
-      assignedTo: objectuserId,
-      workspace: workspaceId,
+    const tasks = await taskModel.find({
+      workspace: { $in: workspaceIdsObj },
     });
 
-    await newTask.save();
-    return NextResponse.json({ data: newTask }, { status: 201 });
+    return NextResponse.json({ data: tasks }, { status: 201 });
   } catch (err) {
     return returnResErr(err);
   }

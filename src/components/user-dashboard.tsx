@@ -31,13 +31,9 @@ import { useEffect, useState } from "react";
 import { Role } from "@repo/db/models/user";
 import { Priority, TaskStatus } from "@repo/db/models/task";
 import UserWorkspaceTable from "./user-workspace-table";
-
-// Mock data for the pie chart
-const taskData = [
-  { name: "Completed", value: 75 },
-  { name: "In-Progress", value: 25 },
-  { name: "Pending", value: 10 },
-];
+import PieCharCard from "./pie-chart-card";
+import mongoose from "mongoose";
+import { TimeLog } from "@repo/db/models/timelog";
 
 // Mock data for the feature points
 const featureData = {
@@ -108,7 +104,7 @@ export function UserDashboardComponent() {
   });
   const [isOpen, setIsOpen] = useState(false);
   const [isWorkspaceFormOpen, setIsWorkspaceFormOpen] = useState(false);
-
+  const [userWorkedHours, setUserWorkedHours] = useState<number>(0);
   const searParams = useSearchParams();
   const userId = searParams.get("userId");
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,8 +168,24 @@ export function UserDashboardComponent() {
         const userWorkspaces = await axios.get(
           `/api/tasks/assignedTasks?userId${userId}`
         );
-        if (userWorkspaces.data.data)
+        if (userWorkspaces.data.data) {
           setAllWorkspaceData(userWorkspaces.data.data);
+          // const curworkspaceIds = userWorkspaces.data.data.map(
+          //   (workspace: any) => new mongoose.Types.ObjectId(workspace._id)
+          // );
+          // const userTimelogs = await axios.post("/api/track/getTimeLogs", {
+          //   workspaceIds: curworkspaceIds,
+          // });
+          // setTimeLogs(userTimelogs.data.data);
+          // console.log("userTimeLogs", userTimelogs.data.data);
+          const hoursWorked = await axios.get(
+            `api/track/gethours?userId=${userId}`
+          );
+          if (hoursWorked.data.data) {
+            setUserWorkedHours(hoursWorked.data.data);
+            console.log(hoursWorked.data.data);
+          }
+        }
       } catch (err) {
         console.log(err);
       }
@@ -186,54 +198,7 @@ export function UserDashboardComponent() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Pie Chart Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tracked Tasks</CardTitle>
-            <CardDescription>
-              Status : Pending | In-Progress | Completed
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={taskData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={80}
-                    outerRadius={100}
-                    fill="#8884d8"
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {taskData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                        color={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-4 flex justify-center space-x-4">
-              {taskData.map((entry, index) => (
-                <div key={`legend-${index}`} className="flex items-center">
-                  <div
-                    className="w-3 h-3 mr-2"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  ></div>
-                  <span>
-                    {entry.name}: {entry.value}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
+        <PieCharCard taskData={allWorkspaceData} />
         {/* Feature Points Card */}
         <Card>
           <CardHeader>
@@ -243,21 +208,19 @@ export function UserDashboardComponent() {
           <CardContent>
             <ul className="space-y-4 pb-2">
               <li className="flex justify-between items-center">
-                <span>Tasks Created:</span>
-                <span className="font-semibold">
-                  {featureData.tasksCreated}
-                </span>
+                <span>Total Projects Assigned:</span>
+                <span className="font-semibold">{allWorkspaceData.length}</span>
               </li>
               <li className="flex justify-between items-center">
-                <span>Tasks Completed:</span>
-                <span className="font-semibold">
-                  {featureData.tasksCompleted}
-                </span>
+                <span>Hours Worked:</span>
+                <span className="font-semibold">{userWorkedHours}</span>
               </li>
               <li className="flex justify-between items-center">
-                <span>Active Projects:</span>
+                <span>Tasks Assigned</span>
                 <span className="font-semibold">
-                  {featureData.activeProjects}
+                  {
+                    // allWorkspaceData.reduce()
+                  }
                 </span>
               </li>
               <li className="flex justify-between items-center ">
@@ -304,67 +267,6 @@ export function UserDashboardComponent() {
                           onChange={handleWorkspaceFormInputChange}
                           required
                         />
-                      </div>
-
-                      <Button type="submit">Proceed</Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              <div className="create-add members flex justify-between">
-                <span>Add Existing User to Workspace:</span>
-                <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                  <DialogTrigger asChild>
-                    <Button>_Add</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogDescription></DialogDescription>
-                    <DialogHeader>
-                      <DialogTitle>Add Existing User to Workspace</DialogTitle>
-                    </DialogHeader>
-                    <form
-                      onSubmit={handleExistingUserAddFormSubmit}
-                      className="space-y-4"
-                    >
-                      <div>
-                        <Label htmlFor="workspace_name">Workspace Name</Label>
-                        <Input
-                          id="workspace_name"
-                          name="workspace_name"
-                          value={newTeamMemberAdd.workspace_name}
-                          onChange={handleExistingUserAddFormInputChange}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email">TeamMember Email</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          value={newTeamMemberAdd.email}
-                          onChange={handleExistingUserAddFormInputChange}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="role">Role</Label>
-                        <Select
-                          onValueChange={handleRoleChange}
-                          value={newMember.role}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Admin">{Role.Admin}</SelectItem>
-                            <SelectItem value="TeamLead">
-                              {Role.TeamLead}
-                            </SelectItem>
-                            <SelectItem value="TeamMember">
-                              {Role.TeamMember}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
                       </div>
 
                       <Button type="submit">Proceed</Button>

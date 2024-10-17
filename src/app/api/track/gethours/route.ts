@@ -1,3 +1,4 @@
+// api/track/gethours?userId=/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import dbConnect from "@repo/db/mongooseConnect";
@@ -8,16 +9,19 @@ import { nextAuthOptions } from "../../auth/[...nextauth]/authOptions";
 
 export const GET = async (req: NextRequest) => {
   const session = await getServerSession(nextAuthOptions);
-  let userId: string | any = req.nextUrl.searchParams.get("userId");
+  const struserId = req.nextUrl.searchParams.get("userId");
 
-  if (!session || (!userId && !session.user._id)) {
+  if (!session || (!struserId && !session.user._id)) {
     return returnResUnAuth();
   }
 
   try {
     await dbConnect();
-    if (!userId) {
+    let userId;
+    if (!struserId) {
       userId = new mongoose.Types.ObjectId(session.user?._id || "");
+    } else {
+      userId = new mongoose.Types.ObjectId(struserId as string);
     }
     const timeLogs = await timeLogModel.find({ user: userId }).lean();
     const totalDuration = timeLogs.reduce((acc, log) => {

@@ -26,7 +26,7 @@ import { CalendarIcon } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { Priority } from "@repo/db/models/task";
 
-interface TaskSubmissionParams {
+export interface TaskSubmissionParams {
   label: string;
   priority: Priority;
   description: string;
@@ -38,18 +38,20 @@ interface TaskCreationPopupProps {
   isOpen: boolean;
   onOpenChange: (prev: boolean) => void;
   onSubmit: (params: TaskSubmissionParams) => void;
+  userToAssign?: string;
 }
 
 export function TaskCreationPopupComponent({
   isOpen,
   onOpenChange,
   onSubmit,
+  userToAssign,
 }: TaskCreationPopupProps) {
   const [label, setLabel] = useState("");
   const [priority, setPriority] = useState<Priority>(Priority.Normal);
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState<Date>(addDays(new Date(), 1));
-  const [assignedTo, setAssignedTo] = useState("");
+  const [assignedTo, setAssignedTo] = useState(userToAssign || "@exmaple.com");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,6 +154,7 @@ export function TaskCreationPopupComponent({
                 onChange={(e) => setAssignedTo(e.target.value)}
                 placeholder="Enter email"
                 className="col-span-3"
+                disabled={!!userToAssign}
               />
             </div>
           </div>
