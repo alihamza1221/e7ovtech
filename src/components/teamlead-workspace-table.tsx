@@ -43,6 +43,7 @@ import {
   TaskCreationPopupComponent,
   TaskSubmissionParams,
 } from "./task-creation-popup";
+import { toast } from "../../@/hooks/use-toast";
 
 export interface Workspace {
   _id: string;
@@ -55,10 +56,12 @@ export interface Workspace {
 interface WorkspaceTableProps {
   workspaceData: Workspace[];
   onChange: React.Dispatch<React.SetStateAction<Workspace[]>>;
+  setDeleteUser?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 const TeamLeadWorkspaceTable: React.FC<WorkspaceTableProps> = ({
   workspaceData,
   onChange,
+  setDeleteUser,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isRemveLoading, setIsRemoveLoading] = useState(false);
@@ -68,6 +71,7 @@ const TeamLeadWorkspaceTable: React.FC<WorkspaceTableProps> = ({
     role: "",
     image: "",
   });
+  const [addMembertoWorkspaceId, setAddMembertoWorkspaceId] = useState("");
   const [isCreateTaskDialogOpen, setIsCreateTaskDialogOpen] = useState(false);
   const [workspaceId, setWorkspaceId] = useState("");
   const [userToAssign, setUserToAssign] = useState("");
@@ -88,22 +92,25 @@ const TeamLeadWorkspaceTable: React.FC<WorkspaceTableProps> = ({
         image: newMember.image,
         role: Role.TeamMember,
         name: newMember.name,
-        workspaces: { workspace: workspace_id, role: newMember.role },
+        workspaces: { workspace: addMembertoWorkspaceId, role: newMember.role },
       },
-      workspaceId: workspace_id,
+      workspaceId: addMembertoWorkspaceId,
     };
     const res = await axios.post("/api/addmember", userDataToAdd);
 
     if (res.data.data) {
-      console.log("success added user", res.data.data);
+      toast({
+        title: "User Added Successfully",
+        description: "User has been added to the workspace.",
+      });
     }
 
     setNewMember({ name: "", email: "", role: "", image: "" });
     setIsOpen(false);
+    if (setDeleteUser) setDeleteUser((prev) => !prev);
   };
 
   async function handleUserRemoved(workspace_id: string, user_id: string) {
-    console.log("usre remo: ", workspace_id, user_id);
     setIsRemoveLoading(true);
     const res = await axios.post("/api/admin/workspace/removeuser", {
       workspace_id,
@@ -111,6 +118,7 @@ const TeamLeadWorkspaceTable: React.FC<WorkspaceTableProps> = ({
     });
     if (res.data.data) {
       console.log("user removed successfully", res.data.data);
+      if (setDeleteUser) setDeleteUser((prev) => !prev);
     }
     setIsRemoveLoading(false);
   }
@@ -187,7 +195,12 @@ const TeamLeadWorkspaceTable: React.FC<WorkspaceTableProps> = ({
           <CardContent>
             <div className="flex justify-end mb-4">
               <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogTrigger asChild>
+                <DialogTrigger
+                  asChild
+                  onClick={() => {
+                    setAddMembertoWorkspaceId(workspace._id);
+                  }}
+                >
                   <Button>Add Member</Button>
                 </DialogTrigger>
                 <DialogDescription></DialogDescription>

@@ -17,12 +17,6 @@ export const POST = async (req: NextRequest) => {
   try {
     await dbConnect();
 
-    //check session.user.role !== "Admin
-    console.log("user", session.user);
-    if (session.user.role !== "Admin") {
-      return returnResUnAuth("Only admins are allowed to create workspaces");
-    }
-
     const { workspace_id, user_id } = await req.json();
     const objectWorkspaceId = new mongoose.Types.ObjectId(workspace_id);
     const objectUserId = new mongoose.Types.ObjectId(user_id);

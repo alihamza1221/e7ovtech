@@ -43,6 +43,7 @@ import {
   TaskSubmissionParams,
 } from "./task-creation-popup";
 import { WorkspaceStatsAccordionComponent } from "./workspace-stats-accordion";
+import { toast } from "../../@/hooks/use-toast";
 
 export interface Workspace {
   _id: string;
@@ -55,10 +56,12 @@ export interface Workspace {
 interface WorkspaceTableProps {
   workspaceData: Workspace[];
   onChange: React.Dispatch<React.SetStateAction<Workspace[]>>;
+  setRefresh?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
   workspaceData,
   onChange,
+  setRefresh,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isRemveLoading, setIsRemoveLoading] = useState(false);
@@ -74,6 +77,7 @@ const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMember({ ...newMember, [e.target.name]: e.target.value });
   };
+  const [addMembertoWorkspaceId, setAddMembertoWorkspaceId] = useState("");
 
   const handleRoleChange = (value: string) => {
     setNewMember({ ...newMember, role: value });
@@ -82,6 +86,7 @@ const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
   const handleSubmit = async (e: React.FormEvent, workspace_id: string) => {
     e.preventDefault();
 
+    console.log("passed workspaceid: ", workspace_id);
     const userDataToAdd = {
       user: {
         password: "Fdsa@",
@@ -89,31 +94,37 @@ const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
         image: newMember.image,
         role: Role.TeamMember,
         name: newMember.name,
-        workspaces: { workspace: workspace_id, role: newMember.role },
+        workspaces: { workspace: addMembertoWorkspaceId, role: newMember.role },
       },
-      workspaceId: workspace_id,
+      workspaceId: addMembertoWorkspaceId,
     };
     const res = await axios.post("/api/addmember", userDataToAdd);
 
     if (res.data.data) {
-      console.log("success added user", res.data.data);
+      toast({
+        title: "User added successfully",
+      });
     }
 
     setNewMember({ name: "", email: "", role: "", image: "" });
     setIsOpen(false);
+    if (setRefresh) setRefresh((prev) => !prev);
   };
 
   async function handleUserRemoved(workspace_id: string, user_id: string) {
-    console.log("usre remo: ", workspace_id, user_id);
     setIsRemoveLoading(true);
     const res = await axios.post("/api/admin/workspace/removeuser", {
       workspace_id,
       user_id,
     });
     if (res.data.data) {
-      console.log("user removed successfully", res.data.data);
+      toast({
+        title: "User removed successfully",
+      });
     }
+
     setIsRemoveLoading(false);
+    if (setRefresh) setRefresh((prev) => !prev);
   }
 
   async function getUserIdByEmail(email: string) {
@@ -136,7 +147,7 @@ const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
     workspaceId: string
   ) {
     const userId = await getUserIdByEmail(assignedTo);
-    console.log("getusrbyid:", userId, "givenid:", assignedTo);
+
     const res = await axios.post(
       `/api/tasks/create?workspaceId=${workspaceId}`,
       {
@@ -180,7 +191,7 @@ const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
         userToAssign={userToAssign}
       />
       {workspaceData.map((workspace) => (
-        <Card key={workspace?._id}>
+        <Card key={workspace._id as string}>
           <CardHeader>
             <CardTitle>Workspace: {workspace.name}</CardTitle>
             <CardDescription>{workspace.description}</CardDescription>
@@ -188,7 +199,12 @@ const WorkspaceTable: React.FC<WorkspaceTableProps> = ({
           <CardContent>
             <div className="flex justify-end mb-4">
               <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogTrigger asChild>
+                <DialogTrigger
+                  asChild
+                  onClick={() => {
+                    setAddMembertoWorkspaceId(workspace._id);
+                  }}
+                >
                   <Button>Add Member</Button>
                 </DialogTrigger>
                 <DialogDescription></DialogDescription>

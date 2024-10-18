@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { nextAuthOptions } from "./api/auth/[...nextauth]/authOptions";
 import AuthProvider from "@repo/providers/nextAuthProvider";
 import { DM_Sans } from "next/font/google";
+import { Toaster } from "@repo/components/ui/toaster";
 
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
@@ -29,7 +30,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${dmSans.className} ${geistMono.variable} antialiased`}>
-        <AuthProvider session={session}>{children}</AuthProvider>
+        <AuthProvider session={session}>
+          {children} <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

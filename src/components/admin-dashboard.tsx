@@ -41,7 +41,7 @@ export function AdminDashboardComponent() {
   const [isWorkspaceFormOpen, setIsWorkspaceFormOpen] = useState(false);
   const [tasksData, setTasksData] = useState<Task[]>([]);
   const [timeLogs, setTimeLogs] = useState<TimeLog[]>([]);
-
+  const [refresh, setRefresh] = useState(false);
   const handleWorkspaceFormInputChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -88,31 +88,29 @@ export function AdminDashboardComponent() {
         console.log("err", err);
       });
   }
-  useEffect(() => {
-    console.log("alltaskdate effe:", allWorkspaceData);
-  }, [allWorkspaceData]);
-  useEffect(() => {
-    const renderWorkspaces = async () => {
-      try {
-        const AdminWorkspaces = await axios.get(
-          "/api/workspace/getworkspace?isAdminWorspaces=true"
+  const renderWorkspaces = async () => {
+    try {
+      const AdminWorkspaces = await axios.get(
+        "/api/workspace/getworkspace?isAdminWorspaces=true"
+      );
+      if (AdminWorkspaces.data.data) {
+        setAllWorkspaceData(AdminWorkspaces.data.data);
+        getTasksData(
+          AdminWorkspaces.data.data.map((workspace: any) => workspace._id)
         );
-        if (AdminWorkspaces.data.data) {
-          setAllWorkspaceData(AdminWorkspaces.data.data);
-          getTasksData(
-            AdminWorkspaces.data.data.map((workspace: any) => workspace._id)
-          );
-          getTimeLogs(
-            AdminWorkspaces.data.data.map((workspace: any) => workspace._id)
-          );
-        }
-        console.log("AdminWorkspaces", AdminWorkspaces.data.data);
-      } catch (err) {
-        console.log(err);
+        getTimeLogs(
+          AdminWorkspaces.data.data.map((workspace: any) => workspace._id)
+        );
       }
-    };
+      console.log("AdminWorkspaces", AdminWorkspaces.data.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
     renderWorkspaces();
-  }, []);
+  }, [refresh]);
   return (
     <div className="space-y-2 px-3 bg-white ">
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
@@ -188,6 +186,7 @@ export function AdminDashboardComponent() {
       <WorkspaceTable
         workspaceData={allWorkspaceData}
         onChange={setAllWorkspaceData}
+        setRefresh={setRefresh}
       />
     </div>
   );

@@ -19,7 +19,7 @@ export default function Home() {
   });
   return (
     <>
-      <Header setAccount={setAccount} />
+      <Header setAccount={setAccount} account={account} />
     </>
   );
 }
