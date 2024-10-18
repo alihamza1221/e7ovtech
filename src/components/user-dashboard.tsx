@@ -94,7 +94,7 @@ export function UserDashboardComponent() {
     const renderWorkspaces = async () => {
       try {
         const userWorkspaces = await axios.get(
-          `/api/tasks/assignedTasks?userId${userId}`
+          `/api/tasks/assignedTasks?userId=${userId}`
         );
         if (userWorkspaces.data.data) {
           setAllWorkspaceData(userWorkspaces.data.data);
