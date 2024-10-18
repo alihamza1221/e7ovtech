@@ -2,7 +2,9 @@
 import E7OVPAY_ABI from "./E7OVPAY_ABI.json";
 import { BrowserProvider, Contract, parseEther, formatEther } from "ethers";
 
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
+const CONTRACT_ADDRESS =
+  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||
+  "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 // Module-level variables to store provider, signer, and contract
 let provider;
 let signer;

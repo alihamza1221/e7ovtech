@@ -2,7 +2,9 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-## [https://e7ovtech.vercel.app/] checkout
+checkout
+
+## [https://e7ovtech.vercel.app/]
 
 First, run the development server:
 
