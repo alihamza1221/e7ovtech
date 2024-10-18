@@ -16,8 +16,9 @@ export const POST = async (req: NextRequest) => {
   }
 
   try {
-    const { content } = await req.json();
+    const { content, aiResponse } = await req.json();
     await dbConnect();
+
     /*
    sender: Types.ObjectId;
    workspace: Types.ObjectId;
@@ -25,7 +26,10 @@ export const POST = async (req: NextRequest) => {
    timestamp: Date;*/
 
     const objectWorkspaceId = new mongoose.Types.ObjectId(workspaceId);
-    const sender = new mongoose.Types.ObjectId(session.user._id || "");
+    let sender;
+    if (aiResponse)
+      sender = new mongoose.Types.ObjectId("6711fe62bf171bcccd58533d");
+    else sender = new mongoose.Types.ObjectId(session.user._id || "");
 
     const newMessage = new messageModel({
       sender,

@@ -63,12 +63,15 @@ export function WorkspaceChatComponent() {
     //implement it later
     const dummyRole = Role.TeamLead;
     if (dummyRole == Role.TeamLead) {
-      return ["assign task", "create-task", "delete-task"];
+      return ["ai", "create-task", "delete-task"];
     } else return ["getWorkspace info"];
   }
 
   const userCommands = getUserCommandsByRole();
 
+  async function getChatCompletions(userMessage: string) {
+    return await axios.post("/api/ai/completions", { userMessage });
+  }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const curValue = inputValue.trim();
@@ -76,16 +79,35 @@ export function WorkspaceChatComponent() {
       const request = curValue.slice(1);
       if (request === "create-task") {
         setIsCreateTaskDialogOpen(true);
+      } else if (request.slice(1, 3) == "ai" || "AI") {
+        const content = curValue;
+        const userMessage = await axios.post(
+          `/api/messages/send?workspaceId=${workspaceId}`,
+          { content }
+        );
+        if (userMessage.data.data as Message) {
+          setMessages([...messages, userMessage.data.data]);
+        }
+        setInputValue("");
+
+        const response = await getChatCompletions(curValue);
+        console.log("AI response", response.data.data);
+        const res = await axios.post(
+          `/api/messages/send?workspaceId=${workspaceId}`,
+          { content: response.data.data as string, aiResponse: true }
+        );
+
+        if (res.data.data as Message) {
+          setMessages([...messages, res.data.data]);
+        }
       }
-    }
-    if (curValue) {
+    } else if (curValue) {
       const content = curValue;
 
       const res = await axios.post(
         `/api/messages/send?workspaceId=${workspaceId}`,
         { content }
       );
-
       if (res.data.data as Message) {
         setMessages([...messages, res.data.data]);
       }
